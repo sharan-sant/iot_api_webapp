@@ -1,4 +1,4 @@
-name: Deploy Flask App to EC2
+name: Deploy to EC2
 
 on:
   push:
@@ -10,16 +10,25 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Connect to EC2 and deploy
-        uses: appleboy/ssh-action@v1.0.3
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ubuntu
-          key: ${{ secrets.EC2_KEY }}
-          script: |
-            cd iot_api_webapp
-            git pull origin main
-            sudo docker stop $(sudo docker ps -q) || true
-            sudo docker rm $(sudo docker ps -aq) || true
-            sudo docker build -t iot_api_webapp .
-            sudo docker run -d -p 80:5050 iot_api_webapp
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Setup SSH key
+      uses: webfactory/ssh-agent@v0.5.4
+      with:
+        ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+
+    - name: Deploy to EC2 and restart Docker container
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ubuntu
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          cd ~/iot_api_webapp
+          git reset --hard
+          git pull origin main
+          sudo docker stop iot_web || true
+          sudo docker rm iot_web || true
+          sudo docker build -t iot_api_webapp .
+          sudo docker run -d -p 80:5050 --name iot_web iot_api_webapp

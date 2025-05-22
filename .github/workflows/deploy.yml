@@ -25,10 +25,16 @@ jobs:
         username: ubuntu
         key: ${{ secrets.EC2_KEY }}
         script: |
-          cd ~/iot_api_webapp
-          git reset --hard
-          git pull origin main
-          sudo docker stop iot_web || true
-          sudo docker rm iot_web || true
-          sudo docker build -t iot_api_webapp .
-          sudo docker run -d -p 80:5050 --name iot_web iot_api_webapp
+            cd ~/iot_api_webapp
+            git reset --hard
+            git pull origin main
+            # 🔽 Stop and remove container using port 80
+            container_id=$(sudo docker ps -q --filter "publish=80")
+            if [ -n "$container_id" ]; then
+            sudo docker stop $container_id
+            sudo docker rm $container_id
+            fi
+            sudo docker stop iot_web || true
+            sudo docker rm iot_web || true
+            sudo docker build -t iot_api_webapp .
+            sudo docker run -d -p 80:5050 --name iot_web iot_api_webapp

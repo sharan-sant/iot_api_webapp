@@ -27,5 +27,5 @@ def home():
     return render_template('index.html', chart_labels=chart_labels, chart_data=chart_data)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5050)
+    app.run(host='0.0.0.0', port=5050, debug=True)
 
